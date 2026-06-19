@@ -38,3 +38,18 @@ Thumbs.db
 
 # Misc archives from the old prototype
 *.tar.gz
+
+# ── Legacy "Digital Scout" prototype (superseded by PadhAI rebuild) ──
+# Kept on disk for reference, excluded from the new repo. Several of these
+# contain REAL secrets (webhook secret, Telegram bot token, VPS creds,
+# dashboard password) and must never be committed.
+digital-scout/
+openclaw-digitalscout.json
+patch_openclaw.py
+digital-scout-nginx.conf
+DIGITAL_SCOUT.md
+digital-scout-agent-prompt.md
+VPS_ACCESS_GUIDE.md
+blueprint_text.txt
+Digital_Scout_Project_Blueprint.docx
+extract_docx.ps1
