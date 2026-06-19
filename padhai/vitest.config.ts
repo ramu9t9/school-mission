@@ -9,5 +9,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // PGlite (in-memory Postgres used by db tests) has a slow first-run WASM
+    // init; the default 5s test timeout is too tight for migrate+insert.
+    testTimeout: 15000,
   },
 });
