@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+.next/
+out/
+build/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Databases & media (runtime data)
+*.db
+*.db-shm
+*.db-wal
+data/
+/var/padhai/
+
+# Brainstorm visual companion artifacts
+.superpowers/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc archives from the old prototype
+*.tar.gz
