@@ -136,3 +136,18 @@ describe('task mutations (PGlite)', () => {
     expect(await getTask(ctx.db, task.id)).toBeNull();
   });
 });
+
+describe('task mutations — not found (PGlite)', () => {
+  it('updateTask throws Task not found for a missing id', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    await expect(updateTask(ctx.db, 99999, { title: 'x' })).rejects.toThrow(/Task not found/);
+  });
+  it('setBoardStatus throws Task not found for a missing id', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    await expect(setBoardStatus(ctx.db, 99999, 'done')).rejects.toThrow(/Task not found/);
+  });
+  it('setPaymentStatus throws Task not found for a missing id', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    await expect(setPaymentStatus(ctx.db, 99999, 'paid')).rejects.toThrow(/Task not found/);
+  });
+});

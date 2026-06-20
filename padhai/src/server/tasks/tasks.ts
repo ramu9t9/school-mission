@@ -126,6 +126,7 @@ export async function updateTask(db: Db, id: number, patch: UpdateTaskInput): Pr
     return existing;
   }
   const [task] = await db.update(tasks).set(set).where(eq(tasks.id, id)).returning();
+  if (!task) throw new Error('Task not found');
   return task;
 }
 
@@ -139,6 +140,7 @@ export async function setBoardStatus(
     .set({ boardStatus: status, completedAt: status === 'done' ? new Date() : null, updatedAt: new Date() })
     .where(eq(tasks.id, id))
     .returning();
+  if (!task) throw new Error('Task not found');
   return task;
 }
 
@@ -152,6 +154,7 @@ export async function setPaymentStatus(
     .set({ paymentStatus: status, updatedAt: new Date() })
     .where(eq(tasks.id, id))
     .returning();
+  if (!task) throw new Error('Task not found');
   return task;
 }
 
