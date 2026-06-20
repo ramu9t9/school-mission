@@ -90,3 +90,71 @@ export async function getTask(db: Db, id: number): Promise<Task | null> {
   const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
   return task ?? null;
 }
+
+const updateTaskSchema = z.object({
+  title: z.string().min(1).optional(),
+  subject: z.string().optional(),
+  description: z.string().optional(),
+  type: z.enum(TASK_TYPES).optional(),
+  priority: z.enum(PRIORITIES).optional(),
+  dueDate: z.string().regex(DATE_RE).optional(),
+  dueTime: z.string().regex(TIME_RE).optional(),
+  amountDue: z.number().nonnegative().optional(),
+  paymentDueDate: z.string().regex(DATE_RE).optional(),
+  reminderAt: z.string().optional(),
+});
+
+export type UpdateTaskInput = z.input<typeof updateTaskSchema>;
+
+export async function updateTask(db: Db, id: number, patch: UpdateTaskInput): Promise<Task> {
+  const v = updateTaskSchema.parse(patch);
+  const set: Record<string, unknown> = { updatedAt: new Date() };
+  if (v.title !== undefined) set.title = v.title;
+  if (v.subject !== undefined) set.subject = v.subject;
+  if (v.description !== undefined) set.description = v.description;
+  if (v.type !== undefined) set.type = v.type;
+  if (v.priority !== undefined) set.priority = v.priority;
+  if (v.dueDate !== undefined) set.dueDate = v.dueDate;
+  if (v.dueTime !== undefined) set.dueTime = v.dueTime;
+  if (v.amountDue !== undefined) set.amountDue = String(v.amountDue);
+  if (v.paymentDueDate !== undefined) set.paymentDueDate = v.paymentDueDate;
+  if (v.reminderAt !== undefined) set.reminderAt = v.reminderAt ? new Date(v.reminderAt) : null;
+
+  if (Object.keys(set).length === 1) {
+    const existing = await getTask(db, id);
+    if (!existing) throw new Error('Task not found');
+    return existing;
+  }
+  const [task] = await db.update(tasks).set(set).where(eq(tasks.id, id)).returning();
+  return task;
+}
+
+export async function setBoardStatus(
+  db: Db,
+  id: number,
+  status: 'todo' | 'doing' | 'done',
+): Promise<Task> {
+  const [task] = await db
+    .update(tasks)
+    .set({ boardStatus: status, completedAt: status === 'done' ? new Date() : null, updatedAt: new Date() })
+    .where(eq(tasks.id, id))
+    .returning();
+  return task;
+}
+
+export async function setPaymentStatus(
+  db: Db,
+  id: number,
+  status: 'unpaid' | 'paid' | 'partial' | 'not_applicable',
+): Promise<Task> {
+  const [task] = await db
+    .update(tasks)
+    .set({ paymentStatus: status, updatedAt: new Date() })
+    .where(eq(tasks.id, id))
+    .returning();
+  return task;
+}
+
+export async function deleteTask(db: Db, id: number): Promise<void> {
+  await db.delete(tasks).where(eq(tasks.id, id));
+}

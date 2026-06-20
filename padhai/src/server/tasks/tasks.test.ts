@@ -4,6 +4,7 @@ import type { Db } from '../db/client';
 import { kids, users, tasks } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { createManualTask, listTasks, getTask } from './tasks';
+import { updateTask, setBoardStatus, setPaymentStatus, deleteTask } from './tasks';
 
 let close: (() => Promise<void>) | null = null;
 afterEach(async () => { if (close) await close(); close = null; });
@@ -85,5 +86,53 @@ describe('getTask (PGlite)', () => {
     expect(found?.title).toBe('A');
     expect(await getTask(ctx.db, 99999)).toBeNull();
     void eq;
+  });
+});
+
+describe('task mutations (PGlite)', () => {
+  it('updates editable fields and bumps updated_at', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    const { userId, kidId } = await seed(ctx.db);
+    const task = await createManualTask(ctx.db, userId, { kidId, type: 'homework', title: 'A', priority: 'low' });
+    const updated = await updateTask(ctx.db, task.id, { title: 'A (edited)', priority: 'high', dueDate: '2026-06-30' });
+    expect(updated.title).toBe('A (edited)');
+    expect(updated.priority).toBe('high');
+    expect(updated.dueDate).toBe('2026-06-30');
+  });
+
+  it('returns the existing row unchanged for an empty patch', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    const { userId, kidId } = await seed(ctx.db);
+    const task = await createManualTask(ctx.db, userId, { kidId, type: 'homework', title: 'A' });
+    const same = await updateTask(ctx.db, task.id, {});
+    expect(same.title).toBe('A');
+  });
+
+  it('moving to done sets completed_at; moving back clears it', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    const { userId, kidId } = await seed(ctx.db);
+    const task = await createManualTask(ctx.db, userId, { kidId, type: 'homework', title: 'A' });
+    const done = await setBoardStatus(ctx.db, task.id, 'done');
+    expect(done.boardStatus).toBe('done');
+    expect(done.completedAt).not.toBeNull();
+    const reopened = await setBoardStatus(ctx.db, task.id, 'doing');
+    expect(reopened.boardStatus).toBe('doing');
+    expect(reopened.completedAt).toBeNull();
+  });
+
+  it('marks a fee task as paid', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    const { userId, kidId } = await seed(ctx.db);
+    const fee = await createManualTask(ctx.db, userId, { kidId, type: 'fee', title: 'Fee', amountDue: 4500 });
+    const paid = await setPaymentStatus(ctx.db, fee.id, 'paid');
+    expect(paid.paymentStatus).toBe('paid');
+  });
+
+  it('deletes a task', async () => {
+    const ctx = await createTestDb(); close = ctx.close;
+    const { userId, kidId } = await seed(ctx.db);
+    const task = await createManualTask(ctx.db, userId, { kidId, type: 'homework', title: 'A' });
+    await deleteTask(ctx.db, task.id);
+    expect(await getTask(ctx.db, task.id)).toBeNull();
   });
 });
