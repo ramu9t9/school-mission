@@ -12,7 +12,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "create-user": "tsx src/scripts/create-user.ts"
+    "create-user": "tsx src/scripts/create-user.ts",
+    "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
